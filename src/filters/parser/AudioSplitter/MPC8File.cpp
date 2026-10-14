@@ -144,7 +144,7 @@ uint64_t CMPC8File::ReadVarLen()
 int32_t CMPC8File::ReadGolomb(const int bits)
 {
 	int32_t n = -1;
-	for (uint8_t b = 0; !b; n++) {
+	for (uint8_t b = 0; !b && m_pFile->GetLastReadError() == S_OK; n++) {
 		b = (uint8_t)m_pFile->BitRead(1);
 	}
 
@@ -221,6 +221,10 @@ bool CMPC8File::ReadSeekTable()
 	m_index[1] = ReadVarLen() + m_header_pos;
 	for (unsigned i = 2; i < size; i++) {
 		int32_t code = ReadGolomb(12);
+		if (m_pFile->GetLastReadError() != S_OK) {
+			m_index.resize(i);
+			break;
+		}
 		if (code & 1) {
 			code = -(code & ~1);
 		}
